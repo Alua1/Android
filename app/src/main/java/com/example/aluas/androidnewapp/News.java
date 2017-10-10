@@ -7,6 +7,8 @@ import android.arch.persistence.room.PrimaryKey;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by aluas on 07.10.2017.
  */
@@ -17,12 +19,15 @@ public class News implements Parcelable {
     @ColumnInfo(name = "id")
     private Integer id;
 
+    @SerializedName("title")
     @ColumnInfo(name = "title")
     private String title;
 
+    @SerializedName("body")
     @ColumnInfo(name = "body")
     private String body;
 
+    @SerializedName("date")
     @ColumnInfo(name = "date")
     private String date;
 

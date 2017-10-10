@@ -11,6 +11,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,10 @@ import android.widget.EditText;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by aluas on 07.10.2017.
@@ -44,14 +49,13 @@ public class NewsFragment extends Fragment implements View.OnClickListener{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         database = Room.databaseBuilder(getActivity().getApplicationContext(), AppDatabase.class, "Room.db").build();
-
-
     }
 
     public void initialize(){
         initDialog();
         initSwipe();
-        new GetNewsAsync().execute();
+       // new GetNewsAsync().execute();
+        GetNews();
     }
 
     @Override
@@ -66,7 +70,8 @@ public class NewsFragment extends Fragment implements View.OnClickListener{
 
     private void initDialog(){
         alertDialog = new AlertDialog.Builder(getActivity());
-        view = getLayoutInflater().inflate(R.layout.news_create, null);
+        LayoutInflater inflater = LayoutInflater.from(this.getContext());
+        view = inflater.inflate(R.layout.news_create, null);
         alertDialog.setView(view);
         alertDialog.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
@@ -126,10 +131,29 @@ public class NewsFragment extends Fragment implements View.OnClickListener{
 //        newsList.add(new News("Kung Fu Panda 3", "After reuniting with his long-lost father, Po  must train a village of pandas", formattedDate));
 //        newsList.add(new News("Warcraft", "Fleeing their dying home to colonize another, fearsome orc warriors invade the peaceful realm of Azeroth.", formattedDate));
 //        newsList.add(new News("Alice in Wonderland", "Alice in Wonderland: Through the Looking Glass", formattedDate));
-//
 //        adapter.notifyDataSetChanged();
   //  }
-
+    public void GetNews(){
+        try{
+            ApiService Service = ApiClient.GetClient().create(ApiService.class);
+            Call<List<News>> call = Service.getNewsAPIList();
+            call.enqueue(new Callback<List<News>>() {
+                @Override
+                public void onResponse(Call<List<News>> call, Response<List<News>> response) {
+                    Log.e("Response", response.body().toString());
+                     List<News> ListOfNews = response.body();
+                    setToRecyclerView(ListOfNews);
+                    new InsertListAsync().execute(ListOfNews);
+                }
+                @Override
+                public void onFailure(Call<List<News>> call, Throwable t) {
+                Log.e("Error", t.getLocalizedMessage());
+                }
+            });
+        }catch (Exception e){
+            Log.e("Error", e.getMessage());
+        }
+    }
     public void AddNews(News _news){
         new InsertAsync().execute(_news);
     }
@@ -187,6 +211,24 @@ public class NewsFragment extends Fragment implements View.OnClickListener{
         @Override
         protected Void doInBackground(News ... crNews) {
             database.newsDao().insert(crNews[0]);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
+    private class InsertListAsync extends AsyncTask<List<News>, Void, Void>{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(List<News> ... crNews) {
+            database.newsDao().insertList(crNews[0]);
             return null;
         }
 
